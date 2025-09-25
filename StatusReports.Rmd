@@ -1,0 +1,112 @@
+---
+title: "Status Report #1 - Romano"
+output:
+  html_document:
+    self_contained: true
+output_dir: "docs"
+output_file: "index.html"
+date: "2025-09-23"
+---
+```{r}
+dir.create("docs", showWarnings = FALSE)
+
+rmarkdown::render(
+  "StatusReports.Rmd",
+  output_format = rmarkdown::html_document(self_contained = TRUE),  # inline all images/libs
+  output_file  = "index.html",                                      # Pages looks for index.html
+  output_dir   = "docs",
+  envir        = new.env()                                          # clean run; no stale objects
+)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+Import dataset
+
+```{r LoadData}
+HeartAttack <- read.csv("~/Documents/Thesis/HeartAttack.csv")
+```
+
+Status Report #1:
+Clean data, find outliers, create data dictionary.
+```{r StatusReport1}
+# Load packages
+library(dplyr)
+
+# Head data to see variable names/see noticiable missing values
+head(HeartAttack)     # Varible names look appropriate and no missing values seen yet
+
+# Find missing values
+colSums(is.na(HeartAttack))       # This shows the missing values in each column.
+# Zero missing values in each column.
+
+# Find outliers in the data
+sapply(Filter(is.numeric, HeartAttack), \(x) length(boxplot.stats(x)$out))
+# No values are outside the outlier bounds 
+
+# See column names and type of data for each column. 
+str(HeartAttack)
+
+# Look at responses for each column 
+lapply(HeartAttack, unique)       # This will help us see if there are errors in each column, and we can also see the responses so we can change them to numeric. 
+
+# Create a copy of the original dataset
+HeartAttackClean <- HeartAttack
+
+# Changle column responses to numbers to further clean data 
+HeartAttackClean$Gender <- as.integer(factor(HeartAttackClean$Gender,
+                                             levels = c("Male","Female"))) - 1L
+# Male = 0, Female = 1
+HeartAttackClean$Diet <- as.integer(factor(HeartAttackClean$Diet,
+                                             levels = c("Unhealthy","Healthy", "Moderate"))) - 1L
+# Unhealthy = 0, Healthy = 1, Moderate = 2
+HeartAttackClean$Ethnicity <- as.integer(factor(HeartAttackClean$Ethnicity,
+                                             levels = c("Hispanic","Asian", "Black", "Other", "White"))) - 1L
+# Hispanic = 0, Asian = 1, Black = 2, Other = 3, White = 4
+HeartAttackClean$EducationLevel <- as.integer(factor(HeartAttackClean$EducationLevel,
+                                             levels = c("High School","College", "Postgraduate"))) - 1L
+# High School = 0, College = 1, Postgrad = 2
+HeartAttackClean$Medication <- as.integer(factor(HeartAttackClean$Medication,
+                                             levels = c("Yes","No"))) - 1L
+# Yes = 0, No = 1
+HeartAttackClean$ChestPainType <- as.integer(factor(HeartAttackClean$ChestPainType,
+                                             levels = c("Typical","Atypical", "Non-anginal", "Asymtomatic"))) - 1L
+# Typical = 0, Atypical = 1, Non-anginal = 2, Asymtomatic = 3
+HeartAttackClean$ECGResults <- as.integer(factor(HeartAttackClean$ECGResults,
+                                             levels = c("ST-T abnormality","LV hypertrophy", "Normal"))) - 1L
+# ST-T abnormality = 0, LV hypertrophy = 1, Normal = 2
+HeartAttackClean$ExerciseInducedAngina <- as.integer(factor(HeartAttackClean$ExerciseInducedAngina,
+                                             levels = c("Yes","No"))) - 1L
+# Yes = 0, No = 1
+HeartAttackClean$Slope <- as.integer(factor(HeartAttackClean$Slope,
+                                             levels = c("Downsloping","Upsloping", "Flat"))) - 1L
+# Downsloping = 0, Upsloping = 1, Flat = 2
+HeartAttackClean$Thalassemia <- as.integer(factor(HeartAttackClean$Thalassemia,
+                                             levels = c("Normal","Reversible defect", "Fixed defect"))) - 1L
+# Normal = 0, Reversible defect = 1, Fixed defect = 2
+HeartAttackClean$Residence <- as.integer(factor(HeartAttackClean$Residence,
+                                             levels = c("Suburban","Rural", "Urban"))) - 1L
+# Suburban = 0, Rural = 1, Urban = 2
+HeartAttackClean$EmploymentStatus <- as.integer(factor(HeartAttackClean$EmploymentStatus,
+                                             levels = c("Retired","Unemployed", "Employed"))) - 1L
+# Retired = 0, Unemployed = 1, Employed = 2
+HeartAttackClean$MaritalStatus <- as.integer(factor(HeartAttackClean$MaritalStatus,
+                                             levels = c("Single","Married", "Widowed", "Divorced"))) - 1L
+# Single = 0, Married = 1, Widowed = 2, Divorced = 3
+HeartAttackClean$Outcome <- as.integer(factor(HeartAttackClean$Outcome,
+                                             levels = c("No Heart Attack","Heart Attack"))) - 1L
+# No Heart Attack = 0, Heart Attack = 1
+
+# Check to make sure everything is changed and organized
+head(HeartAttackClean)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
