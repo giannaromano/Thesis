@@ -1,51 +1,32 @@
 ---
-title: "Status Report #1 - Romano"
-output:
-  html_document:
-    self_contained: true
-output_dir: "docs"
-output_file: "index.html"
-date: "2025-09-23"
+title: 'Status Report #1'
+output: pdf_document
+date: "2025-09-25"
 ---
-```{r}
-dir.create("docs", showWarnings = FALSE)
-
-rmarkdown::render(
-  "StatusReports.Rmd",
-  output_format = rmarkdown::html_document(self_contained = TRUE),  # inline all images/libs
-  output_file  = "index.html",                                      # Pages looks for index.html
-  output_dir   = "docs",
-  envir        = new.env()                                          # clean run; no stale objects
-)
-```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+Load Dataset
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-Import dataset
-
-```{r LoadData}
-HeartAttack <- read.csv("~/Documents/Thesis/HeartAttack.csv")
+```{r chunk}
+HeartAttack <- read.csv("~/Downloads/HeartAttack.csv")
 ```
 
-Status Report #1:
-Clean data, find outliers, create data dictionary.
-```{r StatusReport1}
+
+Status Report #1: Clean data, find outliers, create data dictionary.
+
+```{r StatusReport}
 # Load packages
 library(dplyr)
 
-# Head data to see variable names/see noticiable missing values
-head(HeartAttack)     # Varible names look appropriate and no missing values seen yet
+# Head data to see variable names/see noticeable missing values
+head(HeartAttack)     # Variable names look appropriate and no missing values seen yet
 
 # Find missing values
 colSums(is.na(HeartAttack))       # This shows the missing values in each column.
+
 # Zero missing values in each column.
 
 # Find outliers in the data
@@ -100,7 +81,7 @@ HeartAttackClean$EmploymentStatus <- as.integer(factor(HeartAttackClean$Employme
 # Retired = 0, Unemployed = 1, Employed = 2
 HeartAttackClean$MaritalStatus <- as.integer(factor(HeartAttackClean$MaritalStatus,
                                              levels = c("Single","Married", "Widowed", "Divorced"))) - 1L
-# Single = 0, Married = 1, Widowed = 2, Divorced = 3
+# Single = 0, Married = 1, Widowed = 2, Divroced = 3
 HeartAttackClean$Outcome <- as.integer(factor(HeartAttackClean$Outcome,
                                              levels = c("No Heart Attack","Heart Attack"))) - 1L
 # No Heart Attack = 0, Heart Attack = 1
@@ -109,4 +90,3 @@ HeartAttackClean$Outcome <- as.integer(factor(HeartAttackClean$Outcome,
 head(HeartAttackClean)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
