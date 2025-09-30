@@ -1,0 +1,118 @@
+---
+title: 'Status Report #2'
+output:
+  html_document:
+    df_print: paged
+date: "2025-09-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Tasks: Create EDR, correlations, initial visualizations
+
+```{r prepare}
+# Load necessary libraries
+library(readr)
+library(DiagrammeR)
+library(dplyr)
+
+# Load data and view it (make sure everything looks right)
+HeartAttack <- read.csv("HeartAttack.csv")
+head(HeartAttack)
+
+# Load cleaned data from Status Report #1 and view it (make sure it looks right)
+HeartAttackClean <- readRDS("HeartAttackClean.rds")
+head(HeartAttackClean)
+```
+
+```{r ERD}
+# Create ERD
+mermaid("
+erDiagram
+  HeartAttack {
+    int Age
+    int Gender
+    int Cholesterol
+    int BloodPressure
+    int HeartRate
+    int BMI
+    int Smoker
+    int Diabetes
+    int Hypertension
+    int FamilyHistory
+    int PhysicalActivity
+    int AlcoholConsumption
+    int Diet
+    int StressLevel
+    int Ethnicity
+    int Income
+    int EducationLevel
+    int Medication
+    int ChectPainType
+    int ECGResults
+    int MaxHeartRate
+    int ST_Depression
+    int ExerciseInducedAngina
+    int Slope
+    int NumberOfMajorVessels
+    int Thalassemia
+    int PreviousHeartAttack
+    int StrokeHistory
+    int Residence
+    int EmploymentStatus
+    int MaritalStatus
+    int Outcome
+  }
+")
+
+
+```
+
+```{r chunk_correlations}
+# These are the variables I want to see a correlation with Outcome
+vars <- c("Age","Gender","FamilyHistory","Smoker",
+          "PhysicalActivity","AlcoholConsumption",
+          "Diet","StressLevel","EducationLevel")
+
+# I want to see if the above variables have correlations with Outcome 
+target <- "Outcome"   # <-- change if your column is named differently
+
+df <- HeartAttackClean %>% select(any_of(c(vars, target)))
+
+# Compute correlation with Outcome
+res <- lapply(setdiff(names(df), target), function(v) {
+  x <- df[[v]]
+  y <- df[[target]]
+  ok <- is.finite(df[[v]]) & is.finite(y)
+  r  <- suppressWarnings(cor(df[[v]][ok], y[ok], method = "pearson"))  # phi for 0/1
+  data.frame(variable = v,
+             r = r,
+             direction = ifelse(is.na(r), NA,
+                                ifelse(r > 0, "positive",
+                                       ifelse(r < 0, "negative", "zero"))))
+})
+res <- bind_rows(res) %>% arrange(match(variable, vars))
+print(res)
+```
+- Positive: More heart attacks than no heart attacks  
+- Negative: Fewer heart attacks than heart attacks  
+- Age and stress level have less heart attack outcomes  
+- Gender, family history, smoker, physical activity, alcohol consumption, diet, and education level have more heart attack outcomes  
+- This tells us that the positive factors can increase the risk of a heart attack 
+
+```{r, fig.width=9, fig.height=6}
+# Create initial plots
+barplot(table(HeartAttackClean$Smoker), main="Smoker", xlab="0/1", ylab="Count", col = c("pink", "lightblue"))     # Smoker vs Non-Smoker Count
+barplot(table(HeartAttackClean$FamilyHistory), main="FamilyHistory", xlab="0/1", ylab="Count", col = c("purple", "steelblue"))     # Family History Yes vs No Count
+barplot(table(HeartAttackClean$Gender), main="Gender", xlab="0/1", ylab="Count", col = c("pink", "blue"))          # Male vs Female Count
+barplot(table(HeartAttackClean$PhysicalActivity), main="PhysicalActivity", xlab="level", ylab="Count", col = c("aquamarine", "cadetblue2", "coral1", "darkolivegreen", "deeppink", "orchid", "royalblue1"))        # Physical Activity Count
+
+plot(HeartAttackClean$Age, HeartAttackClean$Cholesterol,
+     xlab="Age", ylab="Cholesterol", pch=16, main="Age vs Cholesterol", col = c("skyblue", "slateblue1"))       # Age vs Cholesterol
+plot(HeartAttackClean$BMI, HeartAttackClean$BloodPressure,
+     xlab="BMI", ylab="BloodPressure", pch=16, main="BMI vs BloodPressure", col = c("thistle1", "violetred1"))      # BMI vs Blood Pressure 
+
+```
+
