@@ -1,6 +1,7 @@
 ---
 title: 'Status Report #2'
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 date: "2025-09-30"
@@ -27,7 +28,7 @@ HeartAttackClean <- readRDS("HeartAttackClean.rds")
 head(HeartAttackClean)
 ```
 
-```{r ERD}
+```{r EDA}
 # Create EDA
 # Shape & columns
 dim(HeartAttackClean)           # rows, cols
