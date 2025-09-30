@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Load Dataset
 
 ```{r chunk}
-HeartAttack <- read.csv("~/Downloads/HeartAttack.csv")
+HeartAttack <- read.csv("HeartAttack.csv")
 ```
 
 
@@ -88,5 +88,10 @@ HeartAttackClean$Outcome <- as.integer(factor(HeartAttackClean$Outcome,
 
 # Check to make sure everything is changed and organized
 head(HeartAttackClean)
+```
+
+
+```{r}
+saveRDS(HeartAttackClean, file = "HeartAttackClean.rds")
 ```
 

@@ -28,46 +28,33 @@ head(HeartAttackClean)
 ```
 
 ```{r ERD}
-# Create ERD
-mermaid("
-erDiagram
-  HeartAttack {
-    int Age
-    int Gender
-    int Cholesterol
-    int BloodPressure
-    int HeartRate
-    int BMI
-    int Smoker
-    int Diabetes
-    int Hypertension
-    int FamilyHistory
-    int PhysicalActivity
-    int AlcoholConsumption
-    int Diet
-    int StressLevel
-    int Ethnicity
-    int Income
-    int EducationLevel
-    int Medication
-    int ChectPainType
-    int ECGResults
-    int MaxHeartRate
-    int ST_Depression
-    int ExerciseInducedAngina
-    int Slope
-    int NumberOfMajorVessels
-    int Thalassemia
-    int PreviousHeartAttack
-    int StrokeHistory
-    int Residence
-    int EmploymentStatus
-    int MaritalStatus
-    int Outcome
-  }
-")
+# Create EDA
+# Shape & columns
+dim(HeartAttackClean)           # rows, cols
+names(HeartAttackClean)         # column names
 
+# Missing values (per column)
+sort(colSums(is.na(HeartAttackClean)), decreasing = TRUE)
 
+# Statistics (works for numeric & 0/1)
+summary(HeartAttackClean)
+
+# Discrete columns, show counts + %
+uniq_n <- sapply(HeartAttackClean, function(x) length(unique(na.omit(x))))
+disc_cols <- names(uniq_n[uniq_n >= 2 & uniq_n <= 10])
+
+freq <- lapply(disc_cols, function(v) {
+  tab <- table(HeartAttackClean[[v]], useNA = "no")
+  data.frame(level = names(tab),
+             count = as.integer(tab),
+             pct = round(100 * prop.table(tab), 1),
+             row.names = NULL)
+})
+names(freq) <- disc_cols
+freq   # prints a small table for each discrete column
+
+## 5) Duplicate rows (optional)
+sum(duplicated(HeartAttackClean))
 ```
 
 ```{r chunk_correlations}
