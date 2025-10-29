@@ -1,0 +1,69 @@
+---
+title: 'Status Report #6'
+output: pdf_document
+date: "2025-10-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r prepare}
+# Load cleaned data from Status Report #1 and view it (make sure it looks right)
+HeartAttackClean <- readRDS("HeartAttackClean.rds")
+
+# Load libraries
+library(ggplot2)
+library(dplyr)
+```
+
+```{r visualizations}
+# Convert Outcome to a labeled factor
+HeartAttackClean <- HeartAttackClean %>%
+  mutate(Outcome = factor(Outcome, 
+                          levels = c(0, 1),
+                          labels = c("No Heart Attack", "Heart Attack")))
+
+# Age vs Outcome (boxplot)
+ggplot(HeartAttackClean, aes(x = Outcome, y = Age, fill = Outcome)) +
+  geom_boxplot() +
+  labs(title = "Age vs Heart Attack Outcome",
+       x = "Outcome", y = "Age") +
+  theme_minimal()
+
+# Gender vs Outcome (bar chart)
+ggplot(HeartAttackClean, aes(x = Gender, fill = Outcome)) +
+  geom_bar(position = "fill") +
+  labs(title = "Gender Distribution by Outcome",
+       x = "Gender", y = "Proportion") +
+  theme_minimal()
+
+# Cholesterol vs Outcome (boxplot)
+ggplot(HeartAttackClean, aes(x = Outcome, y = Cholesterol, fill = Outcome)) +
+  geom_boxplot() +
+  labs(title = "Cholesterol vs Heart Attack Outcome",
+       x = "Outcome", y = "Cholesterol") +
+  theme_minimal()
+
+# Blood Pressure vs Outcome (boxplot)
+ggplot(HeartAttackClean, aes(x = Outcome, y = BloodPressure, fill = Outcome)) +
+  geom_boxplot() +
+  labs(title = "Blood Pressure vs Heart Attack Outcome",
+       x = "Outcome", y = "Blood Pressure") +
+  theme_minimal()
+
+# Smoking vs Outcome (bar chart)
+ggplot(HeartAttackClean, aes(x = Smoker, fill = Outcome)) +
+  geom_bar(position = "fill") +
+  labs(title = "Smoking Status by Outcome",
+       x = "Smoker", y = "Proportion") +
+  theme_minimal()
+
+# Physical Activity vs Outcome (bar chart)
+ggplot(HeartAttackClean, aes(x = PhysicalActivity, fill = Outcome)) +
+  geom_bar(position = "fill") +
+  labs(title = "Physical Activity by Outcome",
+       x = "Physical Activity", y = "Proportion") +
+  theme_minimal()
+```
+

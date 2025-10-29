@@ -1,0 +1,313 @@
+---
+title: 'Status Report #4 - Romano'
+output: pdf_document
+date: "2025-10-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Setup
+
+```{r prepare}
+# Load in libraries 
+library(MASS)
+library(e1071)
+library(rpart)
+library(randomForest)
+
+# Load data and view it (make sure everything looks right)
+HeartAttack <- read.csv("HeartAttack.csv")
+head(HeartAttack)
+
+# Load cleaned data from Status Report #1 and view it (make sure it looks right)
+HeartAttackClean <- readRDS("HeartAttackClean.rds")
+head(HeartAttackClean)
+```
+Logistic Regression Model - Decision Tree
+
+```{r logistical_regression_dt}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+# Split into training and testing sets 70/30
+set.seed(1)
+train_idx <- sample(1:nrow(HeartAttackClean), 0.7 * nrow(HeartAttackClean))
+train <- HeartAttackClean[train_idx, ]
+test  <- HeartAttackClean[-train_idx, ]
+
+# Fit logistic regression
+fit <- glm(
+  reformulate(intersect(predictors, names(HeartAttackClean)), response = "Outcome"),
+  data = HeartAttackClean,
+  family = binomial(),
+  na.action = na.omit
+)
+
+# Add decision tree enhancement 
+tree_fit <- rpart(Outcome ~ ., data = train, method = "class"); tree_pred <- predict(tree_fit, newdata = test, type = "class")
+
+# Results
+summary(fit)          # coefficients (log-odds), p-values
+exp(coef(fit))        # odds ratios
+
+# Simple in-sample predictions & accuracy (threshold = 0.5)
+p    <- predict(fit, type = "response")
+pred <- as.integer(p >= 0.5)
+table(truth = HeartAttackClean$Outcome, pred = pred)
+mean(pred == HeartAttackClean$Outcome)  # accuracy
+
+mean(tree_pred == test$Outcome)
+```
+
+Logistic Regression Model - Random Forest
+
+```{r logistical_regression_rf}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+# Split into training and testing sets (70/30 for example)
+set.seed(1)
+train_idx <- sample(1:nrow(HeartAttackClean), 0.7 * nrow(HeartAttackClean))
+train <- HeartAttackClean[train_idx, ]
+test  <- HeartAttackClean[-train_idx, ]
+
+# Fit logistic regression
+fit <- glm(
+  reformulate(intersect(predictors, names(HeartAttackClean)), response = "Outcome"),
+  data = HeartAttackClean,
+  family = binomial(),
+  na.action = na.omit
+)
+
+# Results
+summary(fit)          # coefficients (log-odds), p-values
+exp(coef(fit))        # odds ratios
+
+# Simple in-sample predictions & accuracy (threshold = 0.5)
+p    <- predict(fit, type = "response")
+pred <- as.integer(p >= 0.5)
+table(truth = HeartAttackClean$Outcome, pred = pred)
+mean(pred == HeartAttackClean$Outcome)  # accuracy
+
+# Add random forest enhancement 
+#rf_fit <- randomForest(Outcome ~ ., data = na.omit(train), ntree = 500)
+#rf_pred <- predict(rf_fit, newdata = na.omit(test))
+## I need some help with this. It keeps buffering, and it will not load results 
+
+```
+
+LDA Model - Decsion Tree
+
+```{r LDA_dt}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+
+# Split into training and test sets
+set.seed(1)
+n <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8 * n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+# Fit LDA model
+lda_fit <- lda(Outcome ~ Age + Gender + FamilyHistory + Ethnicity +
+               Smoker + BloodPressure + Cholesterol + BMI + Diabetes +
+               Diet + PhysicalActivity + HeartRate + AlcoholConsumption,
+               data = train)
+
+# Add decision tree enhancement 
+tree_fit <- rpart(Outcome ~ ., data = train, method = "class"); tree_pred <- predict(tree_fit, newdata = test, type = "class")
+
+
+# Predict on test data
+lda_pred <- predict(lda_fit, newdata = test)$class
+
+# Confusion matrix and accuracy
+lda_cm <- table(truth = test$Outcome, pred = lda_pred)
+lda_acc <- mean(lda_pred == test$Outcome)
+
+lda_cm
+lda_acc
+
+mean(tree_pred == test$Outcome)
+```
+
+LDA Model - Random Forest
+
+```{r LDA_rf}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+
+# Split into training and test sets
+set.seed(1)
+n <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8 * n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+# Fit LDA model
+lda_fit <- lda(Outcome ~ Age + Gender + FamilyHistory + Ethnicity +
+               Smoker + BloodPressure + Cholesterol + BMI + Diabetes +
+               Diet + PhysicalActivity + HeartRate + AlcoholConsumption,
+               data = train)
+
+# Add random forest enhancement 
+#rf_fit <- randomForest(Outcome ~ ., data = train, ntree = 500, importance = TRUE); rf_pred <- predict(rf_fit, newdata = test)
+## Same issue as above 
+
+# Predict on test data
+lda_pred <- predict(lda_fit, newdata = test)$class
+
+# Confusion matrix and accuracy
+lda_cm <- table(truth = test$Outcome, pred = lda_pred)
+lda_acc <- mean(lda_pred == test$Outcome)
+
+lda_cm
+lda_acc
+```
+
+QDA Model - Decision Tree 
+
+```{r QDA_dt}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+qda_fit  <- qda(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+qda_pred <- predict(qda_fit, newdata = test_cc)$class
+
+# Add decsion tree enhancement 
+tree_fit <- rpart(Outcome ~ ., data = train, method = "class"); tree_pred <- predict(tree_fit, newdata = test, type = "class")
+
+qda_cm  <- table(truth = test_cc$Outcome, pred = qda_pred)
+qda_acc <- mean(qda_pred == test_cc$Outcome)
+
+qda_cm
+qda_acc
+
+mean(tree_pred == test$Outcome)
+```
+
+QDA Model - Random Forest 
+
+```{r QDA_rf}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+qda_fit  <- qda(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+qda_pred <- predict(qda_fit, newdata = test_cc)$class
+
+# Add random forest enhancement 
+
+qda_cm  <- table(truth = test_cc$Outcome, pred = qda_pred)
+qda_acc <- mean(qda_pred == test_cc$Outcome)
+
+qda_cm
+qda_acc
+```
+
+Naive Bayes Model - Decision Tree
+
+```{r Naive_Bayes_dt}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+nb_fit  <- naiveBayes(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+nb_pred <- predict(nb_fit, newdata = test_cc, type = "class")
+
+# Add decision tree enhancement 
+tree_fit <- rpart(Outcome ~ ., data = train, method = "class"); tree_pred <- predict(tree_fit, newdata = test, type = "class")
+
+nb_cm  <- table(truth = test_cc$Outcome, pred = nb_pred)
+nb_acc <- mean(nb_pred == test_cc$Outcome)
+
+nb_cm
+nb_acc
+
+mean(tree_pred == test$Outcome)
+```
+
+Naive Bayes Model - Random Forest 
+
+```{r Naive_Bayes_rf}
+test$Outcome <- as.factor(test$Outcome)
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+nb_fit  <- naiveBayes(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+nb_pred <- predict(nb_fit, newdata = test_cc, type = "class")
+
+# Add random forest enhancement 
+
+nb_cm  <- table(truth = test_cc$Outcome, pred = nb_pred)
+nb_acc <- mean(nb_pred == test_cc$Outcome)
+
+nb_cm
+nb_acc
+```
+
+Conclusion:  
+- Adding decsion trees to my models did not improve the accuracy as I was hoping it would  
+- I was looking for a durastic difference in accuracy percentage, but there was little to noo change  
+- I am hopeful that adding a random forest enhancement will improve my accuracy, but I was not able to get that to work with my data after a lot of research

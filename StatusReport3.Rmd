@@ -1,0 +1,149 @@
+---
+title: 'Status Report #3'
+output: pdf_document
+date: "2025-10-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Setup
+
+```{r prepare}
+# Load in libraries 
+library(MASS)
+library(e1071)
+
+# Load data and view it (make sure everything looks right)
+HeartAttack <- read.csv("HeartAttack.csv")
+head(HeartAttack)
+
+# Load cleaned data from Status Report #1 and view it (make sure it looks right)
+HeartAttackClean <- readRDS("HeartAttackClean.rds")
+head(HeartAttackClean)
+```
+Logistic Regression Model
+
+```{r logistical_regression}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+# Fit logistic regression
+fit <- glm(
+  reformulate(intersect(predictors, names(HeartAttackClean)), response = "Outcome"),
+  data = HeartAttackClean,
+  family = binomial(),
+  na.action = na.omit
+)
+
+# Results
+summary(fit)          # coefficients (log-odds), p-values
+exp(coef(fit))        # odds ratios
+
+# Simple in-sample predictions & accuracy (threshold = 0.5)
+p    <- predict(fit, type = "response")
+pred <- as.integer(p >= 0.5)
+table(truth = HeartAttackClean$Outcome, pred = pred)
+mean(pred == HeartAttackClean$Outcome)  # accuracy
+```
+
+
+LDA Model 
+
+```{r LDA}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+
+# Split into training and test sets
+set.seed(1)
+n <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8 * n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+# Fit LDA model
+lda_fit <- lda(Outcome ~ Age + Gender + FamilyHistory + Ethnicity +
+               Smoker + BloodPressure + Cholesterol + BMI + Diabetes +
+               Diet + PhysicalActivity + HeartRate + AlcoholConsumption,
+               data = train)
+
+# Predict on test data
+lda_pred <- predict(lda_fit, newdata = test)$class
+
+# Confusion matrix and accuracy
+lda_cm <- table(truth = test$Outcome, pred = lda_pred)
+lda_acc <- mean(lda_pred == test$Outcome)
+
+lda_cm
+lda_acc
+```
+
+
+QDA Model 
+
+```{r QDA}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+qda_fit  <- qda(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+qda_pred <- predict(qda_fit, newdata = test_cc)$class
+
+qda_cm  <- table(truth = test_cc$Outcome, pred = qda_pred)
+qda_acc <- mean(qda_pred == test_cc$Outcome)
+
+qda_cm
+qda_acc
+```
+
+
+Naive Bayes Model
+
+```{r Naive_Bayes}
+# Choose predictors 
+predictors <- c("Age","Gender","FamilyHistory","Ethnicity",
+                "Smoker","BloodPressure","Cholesterol","BMI",
+                "Diabetes","Diet","PhysicalActivity","HeartRate",
+                "AlcoholConsumption")
+set.seed(1)
+n  <- nrow(HeartAttackClean)
+id <- sample(n, floor(0.8*n))
+train <- HeartAttackClean[id, ]
+test  <- HeartAttackClean[-id, ]
+
+train  <- train[complete.cases(train[, c("Outcome", predictors)]), ]
+test_cc <- test[complete.cases(test[, predictors]), ]
+
+nb_fit  <- naiveBayes(as.formula(paste("Outcome ~", paste(predictors, collapse = " + "))), data = train)
+nb_pred <- predict(nb_fit, newdata = test_cc, type = "class")
+
+nb_cm  <- table(truth = test_cc$Outcome, pred = nb_pred)
+nb_acc <- mean(nb_pred == test_cc$Outcome)
+
+nb_cm
+nb_acc
+```
+
+Conclusion:  
+- All models have around 50% accuracy  
+- These models are similar to a random sample with an accuracy around 50%  
+- My goal for next week is to fine tune these models and add more to them to raise the accuracy and make them perfect! 
